@@ -1,0 +1,643 @@
+openapi: 3.0.3
+info:
+  title: JobPortal API
+  version: 1.0.0
+  description: |-
+    OpenAPI schema for the JobPortal MVP.
+
+    Authentication flow:
+    1. POST `/api/auth/register/` to create a user.
+    2. POST `/api/auth/login/` with email and password to obtain JWTs.
+    3. Send `Authorization: Bearer <access>` to protected endpoints.
+    4. POST `/api/auth/refresh/` to rotate an expired access token.
+paths:
+  /api/applications/:
+    post:
+      operationId: applications_create
+      description: Create a new application for the authenticated job seeker.
+      summary: Create a job application
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: ''
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: Issue an access and refresh token pair for a valid user.
+      summary: Authenticate and issue JWTs
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPairResponse'
+          description: ''
+  /api/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: Issue a fresh access token from a valid refresh token.
+      summary: Refresh an access token
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+          description: ''
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: Register a new user and return its public payload.
+      summary: Register a new user
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/resumes/me/:
+    get:
+      operationId: resumes_me_retrieve
+      description: Retrieve or partially update the authenticated seeker's resume.
+      summary: Retrieve your resume
+      tags:
+      - resumes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+          description: ''
+    patch:
+      operationId: resumes_me_partial_update
+      description: Partially update the authenticated user's resume.
+      summary: Update your resume
+      tags:
+      - resumes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedResumeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedResumeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedResumeRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+          description: ''
+  /api/vacancies/:
+    get:
+      operationId: vacancies_list
+      description: CRUD API for vacancies with public read access.
+      summary: List vacancies
+      parameters:
+      - in: query
+        name: employer
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: salary_max
+        schema:
+          type: integer
+      - in: query
+        name: salary_min
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - vacancies
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVacancyList'
+          description: ''
+    post:
+      operationId: vacancies_create
+      description: CRUD API for vacancies with public read access.
+      summary: Create a vacancy
+      tags:
+      - vacancies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacancyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VacancyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VacancyRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vacancy'
+          description: ''
+  /api/vacancies/{id}/:
+    get:
+      operationId: vacancies_retrieve
+      description: CRUD API for vacancies with public read access.
+      summary: Retrieve a vacancy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vacancy.
+        required: true
+      tags:
+      - vacancies
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vacancy'
+          description: ''
+    patch:
+      operationId: vacancies_partial_update
+      description: CRUD API for vacancies with public read access.
+      summary: Update your vacancy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vacancy.
+        required: true
+      tags:
+      - vacancies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedVacancyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedVacancyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedVacancyRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vacancy'
+          description: ''
+    delete:
+      operationId: vacancies_destroy
+      description: CRUD API for vacancies with public read access.
+      summary: Delete your vacancy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vacancy.
+        required: true
+      tags:
+      - vacancies
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/vacancies/mine/:
+    get:
+      operationId: vacancies_mine_list
+      description: Return vacancies owned by the authenticated employer.
+      summary: List your vacancies
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - vacancies
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVacancyList'
+          description: ''
+components:
+  schemas:
+    Application:
+      type: object
+      description: Serializer for creating and reading applications.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        vacancy:
+          type: integer
+        status:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - status
+      - updated_at
+      - vacancy
+    ApplicationRequest:
+      type: object
+      description: Serializer for creating and reading applications.
+      properties:
+        vacancy:
+          type: integer
+      required:
+      - vacancy
+    PaginatedVacancyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vacancy'
+    PatchedResumeRequest:
+      type: object
+      description: Serializer for the authenticated user's resume.
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        summary:
+          type: string
+        education: {}
+        experience: {}
+    PatchedVacancyRequest:
+      type: object
+      description: Serialize vacancy payloads.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          minLength: 1
+        salary_min:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        salary_max:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+    RegisterRequest:
+      type: object
+      description: Handle user registration payloads.
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - email
+      - password
+      - role
+    Resume:
+      type: object
+      description: Serializer for the authenticated user's resume.
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        summary:
+          type: string
+        education: {}
+        experience: {}
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - updated_at
+    RoleEnum:
+      enum:
+      - JOB_SEEKER
+      - EMPLOYER
+      - ADMIN
+      type: string
+      description: |-
+        * `JOB_SEEKER` - Job seeker
+        * `EMPLOYER` - Employer
+        * `ADMIN` - Admin
+    StatusEnum:
+      enum:
+      - OPEN
+      - CLOSED
+      type: string
+      description: |-
+        * `OPEN` - Open
+        * `CLOSED` - Closed
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - password
+    TokenPairResponse:
+      type: object
+      description: Document the JWT login response payload.
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - refresh
+    TokenRefreshResponse:
+      type: object
+      description: Document the JWT refresh response payload.
+      properties:
+        access:
+          type: string
+      required:
+      - access
+    User:
+      type: object
+      description: Serialize user payloads.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - email
+      - id
+      - is_active
+      - role
+      - updated_at
+    Vacancy:
+      type: object
+      description: Serialize vacancy payloads.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        employer:
+          type: string
+          format: email
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        salary_min:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        salary_max:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - description
+      - employer
+      - id
+      - salary_max
+      - salary_min
+      - title
+      - updated_at
+    VacancyRequest:
+      type: object
+      description: Serialize vacancy payloads.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          minLength: 1
+        salary_min:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        salary_max:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+      required:
+      - description
+      - salary_max
+      - salary_min
+      - title
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+- name: accounts
+  description: User registration and JWT authentication.
+- name: resumes
+  description: Job seeker resume self-service endpoints.
+- name: vacancies
+  description: Vacancy discovery and employer vacancy management.
+- name: applications
+  description: Job application submission endpoints.

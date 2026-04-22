@@ -1,0 +1,2 @@
+"""JobPortal project package."""
+
