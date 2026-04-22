@@ -162,6 +162,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/Resume'
           description: ''
+  /api/search/vacancies/:
+    get:
+      operationId: search_vacancies_list
+      description: Execute a search query against MeiliSearch.
+      parameters:
+      - in: query
+        name: employer_id
+        schema:
+          type: integer
+        description: Filter by employer ID
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Search query string
+      - in: query
+        name: salary_max
+        schema:
+          type: integer
+        description: Filter by maximum salary
+      - in: query
+        name: salary_min
+        schema:
+          type: integer
+        description: Filter by minimum salary
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by vacancy status (e.g., OPEN)
+      tags:
+      - search
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VacancySearch'
+          description: ''
   /api/vacancies/:
     get:
       operationId: vacancies_list
@@ -627,6 +668,40 @@ components:
       - salary_max
       - salary_min
       - title
+    VacancySearch:
+      type: object
+      description: Serializer for vacancy search result documents.
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        salary_min:
+          type: integer
+        salary_max:
+          type: integer
+        status:
+          type: string
+        employer_id:
+          type: integer
+        created_at:
+          type: number
+          format: double
+        updated_at:
+          type: number
+          format: double
+      required:
+      - created_at
+      - description
+      - employer_id
+      - id
+      - salary_max
+      - salary_min
+      - status
+      - title
+      - updated_at
   securitySchemes:
     jwtAuth:
       type: http

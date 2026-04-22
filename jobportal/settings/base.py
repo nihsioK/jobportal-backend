@@ -148,3 +148,8 @@ SPECTACULAR_SETTINGS = {
 }
 
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+# MeiliSearch Configuration
+MEILI_URL = os.getenv("MEILI_URL", "http://localhost:7700")
+MEILI_MASTER_KEY = os.getenv("MEILI_MASTER_KEY", "masterKey")
+MEILI_VACANCY_INDEX = "vacancies"

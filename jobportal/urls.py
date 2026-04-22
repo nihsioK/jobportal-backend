@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/resumes/", include("resumes.urls")),
     path("api/vacancies/", include("vacancies.urls")),
     path("api/applications/", include("applications.urls")),
+    path("api/search/", include("search.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="api-schema"), name="api-redoc"),
