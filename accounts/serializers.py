@@ -41,7 +41,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid role.")
         return value
 
-    def create(self, validated_data: dict[str, Any]) -> "User":
+    def create(self, validated_data: dict[str, Any]) -> User:
         """Create a user from validated registration data."""
         logger.info("Creating a registered user with email %s.", validated_data.get("email"))
         password = validated_data.pop("password")
