@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    profiles: [test]
+    environment:
+      - POSTGRES_DB=jobportal
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d jobportal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    profiles: [test]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend-test:
+    build: .
+    profiles: [test]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DJANGO_SETTINGS_MODULE=jobportal.settings.dev
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/jobportal
+      - REDIS_URL=redis://redis:6379/0
+      - DJANGO_SECRET_KEY=test-secret-key
+      - DJANGO_DEBUG=true
+    command: pytest

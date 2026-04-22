@@ -9,7 +9,6 @@ from typing import Any
 
 import dj_database_url
 
-
 logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -37,7 +36,7 @@ def _get_allowed_hosts() -> list[str]:
 def _get_database_config() -> dict[str, Any]:
     """Build the database configuration from the environment."""
     database_url = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
-    logger.info("Configuring database from DATABASE_URL with scheme %s.", database_url.split(':', maxsplit=1)[0])
+    logger.info("Configuring database from DATABASE_URL with scheme %s.", database_url.split(":", maxsplit=1)[0])
     return {
         "default": dj_database_url.parse(
             database_url,
@@ -117,9 +116,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,

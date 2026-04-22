@@ -14,7 +14,6 @@ from accounts.permissions import IsJobSeeker
 from applications.models import Application
 from applications.serializers import ApplicationSerializer
 
-
 logger = logging.getLogger(__name__)
 
 

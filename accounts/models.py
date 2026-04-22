@@ -10,7 +10,6 @@ from django.db import models
 
 from accounts.managers import UserManager
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +31,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    objects = UserManager()
+    objects = UserManager()  # type: ignore
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: list[str] = ["role"]
@@ -50,4 +49,3 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.role not in UserRole.values:
             logger.error("Invalid role %s provided for user %s.", self.role, self.email)
             raise ValidationError({"role": "Invalid role."})
-

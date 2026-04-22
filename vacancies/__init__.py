@@ -1,2 +1,1 @@
 """Vacancies application."""
-

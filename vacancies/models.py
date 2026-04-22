@@ -10,7 +10,6 @@ from django.db import models
 
 from accounts.models import UserRole
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -59,5 +58,4 @@ class Vacancy(models.Model):
         """Validate and persist the vacancy."""
         logger.info("Saving vacancy %s.", self.title)
         self.full_clean()
-        super().save(*args, **kwargs)
-
+        super().save(*args, **kwargs) # type: ignore

@@ -13,7 +13,6 @@ from applications.models import Application
 from resumes.models import Resume
 from vacancies.models import Vacancy, VacancyStatus
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +21,7 @@ def get_request_resume(request: Request) -> Resume:
     logger.info("Resolving request resume.", extra={"user_id": getattr(request.user, "pk", None)})
 
     try:
-        return request.user.resume
+        return request.user.resume # type: ignore
     except Resume.DoesNotExist as exc:
         logger.error("Authenticated user has no resume.", extra={"user_id": getattr(request.user, "pk", None)})
         raise serializers.ValidationError({"resume": "Authenticated job seeker does not have a resume."}) from exc
@@ -44,7 +43,10 @@ class ApplicationSerializer(serializers.ModelSerializer[Application]):
         request = self.context.get("request")
         logger.info(
             "Validating application payload.",
-            extra={"user_id": getattr(getattr(request, "user", None), "pk", None), "vacancy_id": getattr(attrs.get("vacancy"), "pk", None)},
+            extra={
+                "user_id": getattr(getattr(request, "user", None), "pk", None),
+                "vacancy_id": getattr(attrs.get("vacancy"), "pk", None),
+            },
         )
 
         if request is None:
@@ -78,4 +80,6 @@ class ApplicationSerializer(serializers.ModelSerializer[Application]):
             return Application.objects.create(**validated_data)
         except IntegrityError as exc:
             logger.error("Application creation hit a uniqueness constraint.", exc_info=exc)
-            raise serializers.ValidationError({"non_field_errors": ["You have already applied to this vacancy."]}) from exc
+            raise serializers.ValidationError(
+                {"non_field_errors": ["You have already applied to this vacancy."]}
+            ) from exc

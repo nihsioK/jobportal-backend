@@ -7,7 +7,6 @@ import logging
 import os
 import sys
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -25,4 +24,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

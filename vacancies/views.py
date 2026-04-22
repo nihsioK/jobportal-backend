@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any, cast
 
-from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, extend_schema_view
 from django.db.models import QuerySet
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -16,7 +16,6 @@ from accounts.models import User
 from accounts.permissions import IsEmployer, IsOwner
 from vacancies.models import Vacancy
 from vacancies.serializers import VacancySerializer
-
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +109,7 @@ class VacancyViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    def perform_create(self, serializer: VacancySerializer) -> None:
+    def perform_create(self, serializer: Any) -> None:
         """Create a vacancy owned by the authenticated employer."""
         employer = cast(User, self.request.user)
         logger.info("Creating vacancy for employer %s.", employer.email)

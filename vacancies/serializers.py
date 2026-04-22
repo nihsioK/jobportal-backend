@@ -9,14 +9,13 @@ from rest_framework import serializers
 
 from vacancies.models import Vacancy
 
-
 logger = logging.getLogger(__name__)
 
 
 class VacancySerializer(serializers.ModelSerializer[Vacancy]):
     """Serialize vacancy payloads."""
 
-    employer = serializers.SlugRelatedField(read_only=True, slug_field="email")
+    employer: Any = serializers.SlugRelatedField(read_only=True, slug_field="email")
 
     class Meta:
         model = Vacancy
@@ -60,4 +59,3 @@ class VacancySerializer(serializers.ModelSerializer[Vacancy]):
             raise serializers.ValidationError(getattr(exc, "message_dict", {"detail": str(exc)})) from exc
 
         return attrs
-

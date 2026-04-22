@@ -5,28 +5,44 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('resumes', '0001_initial'),
-        ('vacancies', '0001_initial'),
+        ("resumes", "0001_initial"),
+        ("vacancies", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Application',
+            name="Application",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('PENDING', 'Pending'), ('ACCEPTED', 'Accepted'), ('REJECTED', 'Rejected')], default='PENDING', max_length=16)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('resume', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='applications', to='resumes.resume')),
-                ('vacancy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='applications', to='vacancies.vacancy')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("PENDING", "Pending"), ("ACCEPTED", "Accepted"), ("REJECTED", "Rejected")],
+                        default="PENDING",
+                        max_length=16,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "resume",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, related_name="applications", to="resumes.resume"
+                    ),
+                ),
+                (
+                    "vacancy",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, related_name="applications", to="vacancies.vacancy"
+                    ),
+                ),
             ],
             options={
-                'ordering': ('-created_at',),
-                'constraints': [models.UniqueConstraint(fields=('resume', 'vacancy'), name='unique_resume_vacancy')],
+                "ordering": ("-created_at",),
+                "constraints": [models.UniqueConstraint(fields=("resume", "vacancy"), name="unique_resume_vacancy")],
             },
         ),
     ]

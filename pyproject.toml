@@ -20,12 +20,62 @@ dependencies = [
 dev = [
     "pytest==8.4.2",
     "pytest-django==4.12.0",
+    "factory-boy==3.3.0",
+    "pytest-cov==4.1.0",
+    "ruff==0.3.4",
+    "mypy==1.9.0",
+    "psycopg2-binary==2.9.9",
+    "redis==5.0.3",
+    "django-stubs==5.0.0",
+    "djangorestframework-stubs==3.15.0",
 ]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "jobportal.settings.dev"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
-addopts = "-q"
+addopts = "--cov=. --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*migrations*",
+    "*tests*",
+    "manage.py",
+    "jobportal/wsgi.py",
+    "jobportal/asgi.py",
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
 
 [tool.setuptools.packages.find]
 include = ["accounts*", "applications*", "jobportal*", "notifications*", "resumes*", "search*", "vacancies*"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+exclude = "migrations/|accounts/models\\.py|accounts/serializers\\.py|vacancies/views\\.py|applications/views\\.py|resumes/views\\.py"
+
+[tool.django-stubs]
+django_settings_module = "jobportal.settings.dev"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "N", "UP", "PL"]
+ignore = ["PLR0913"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

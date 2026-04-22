@@ -11,7 +11,6 @@ from rest_framework.views import APIView
 
 from accounts.models import UserRole
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -48,7 +47,9 @@ class IsOwner(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         """Ensure anonymous callers are rejected before object checks."""
         allowed = bool(request.user and request.user.is_authenticated)
-        logger.info("IsOwner base permission evaluated to %s for user %s.", allowed, getattr(request.user, "email", None))
+        logger.info(
+            "IsOwner base permission evaluated to %s for user %s.", allowed, getattr(request.user, "email", None)
+        )
         return allowed
 
     def has_object_permission(self, request: Request, view: APIView, obj: Any) -> bool:
@@ -67,4 +68,3 @@ class IsOwner(BasePermission):
             getattr(request.user, "email", None),
         )
         return allowed
-

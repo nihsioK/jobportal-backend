@@ -20,7 +20,6 @@ from accounts.serializers import (
     UserSerializer,
 )
 
-
 logger = logging.getLogger(__name__)
 
 

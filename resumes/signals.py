@@ -11,7 +11,6 @@ from django.dispatch import receiver
 from accounts.models import User, UserRole
 from resumes.models import Resume
 
-
 logger = logging.getLogger(__name__)
 
 

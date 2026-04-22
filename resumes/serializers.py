@@ -53,17 +53,13 @@ class ResumeSerializer(serializers.ModelSerializer):
                     "Nested JSON validation failed because item was not an object",
                     extra={"field_name": field_name, "index": index},
                 )
-                raise serializers.ValidationError(
-                    f"Item at index {index} must be an object."
-                )
+                raise serializers.ValidationError(f"Item at index {index} must be an object.")
 
             if any(not isinstance(key, str) for key in item.keys()):
                 logger.error(
                     "Nested JSON validation failed because a key was not a string",
                     extra={"field_name": field_name, "index": index},
                 )
-                raise serializers.ValidationError(
-                    f"Item at index {index} must use string keys."
-                )
+                raise serializers.ValidationError(f"Item at index {index} must use string keys.")
 
         return cast(list[dict[str, Any]], value)

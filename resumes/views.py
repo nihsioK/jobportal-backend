@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from drf_spectacular.utils import extend_schema_view, extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, permissions
 from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
@@ -50,7 +50,7 @@ class ResumeMeAPIView(generics.RetrieveUpdateAPIView):
             raise NotFound("Resume not found.")
 
         try:
-            resume = Resume.objects.select_related("user").get(user=user)
+            resume = Resume.objects.select_related("user").get(user=user)  # type: ignore
         except Resume.DoesNotExist as error:
             logger.error(
                 "Resume lookup failed for authenticated job seeker",
