@@ -37,7 +37,7 @@ jobs:
 
       - name: Run tests with Docker Compose
         run: |
-          docker compose --profile test up --build --exit-code-from backend-test
+          docker compose --profile compose-test up --build --exit-code-from backend-test
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

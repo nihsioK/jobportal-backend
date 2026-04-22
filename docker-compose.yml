@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
-    profiles: [test]
+    profiles: [compose-test]
     environment:
       - POSTGRES_DB=jobportal
       - POSTGRES_USER=postgres
@@ -14,7 +14,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    profiles: [test]
+    profiles: [compose-test]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -23,7 +23,7 @@ services:
 
   backend-test:
     build: .
-    profiles: [test]
+    profiles: [compose-test]
     depends_on:
       db:
         condition: service_healthy
