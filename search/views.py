@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import status
+from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 class VacancySearchView(APIView):
     """Public search endpoint for vacancies."""
 
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes: list = []
+    permission_classes = [permissions.AllowAny]
 
     @extend_schema(
         parameters=[

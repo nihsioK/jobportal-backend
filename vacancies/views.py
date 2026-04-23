@@ -14,6 +14,8 @@ from rest_framework.response import Response
 
 from accounts.models import User
 from accounts.permissions import IsEmployer, IsOwner
+from applications.models import Application
+from applications.serializers import ApplicationListSerializer
 from vacancies.models import Vacancy
 from vacancies.serializers import VacancySerializer
 
@@ -60,6 +62,11 @@ logger = logging.getLogger(__name__)
         summary="List your vacancies",
         responses={200: VacancySerializer(many=True)},
     ),
+    applicants=extend_schema(
+        tags=["vacancies"],
+        summary="List applicants for your vacancy",
+        responses={200: ApplicationListSerializer(many=True)},
+    ),
 )
 class VacancyViewSet(viewsets.ModelViewSet):
     """CRUD API for vacancies with public read access."""
@@ -76,6 +83,8 @@ class VacancyViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         if self.action in {"mine", "create"}:
             return [permissions.IsAuthenticated(), IsEmployer()]
+        if self.action == "applicants":
+            return [permissions.IsAuthenticated(), IsEmployer(), IsOwner()]
         return [permissions.IsAuthenticated(), IsEmployer(), IsOwner()]
 
     def get_queryset(self) -> QuerySet[Vacancy]:
@@ -127,4 +136,26 @@ class VacancyViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="applicants")
+    def applicants(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Return all applications for the given vacancy."""
+        vacancy = self.get_object()
+        logger.info(
+            "Listing applicants for vacancy %s (employer %s).",
+            vacancy.pk,
+            getattr(request.user, "email", None),
+        )
+        applications = (
+            Application.objects
+            .filter(vacancy=vacancy)
+            .select_related("resume__user", "vacancy", "vacancy__employer")
+        )
+        page = self.paginate_queryset(applications)
+        if page is not None:
+            serializer = ApplicationListSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = ApplicationListSerializer(applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,0 +1,77 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jobportal
+      POSTGRES_USER: jobportal
+      POSTGRES_PASSWORD: jobportal
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: masterKey
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili_data:/meili_data
+
+  web:
+    build: .
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             gunicorn jobportal.wsgi:application --bind 0.0.0.0:8000 --workers 4"
+    environment:
+      DJANGO_SETTINGS_MODULE: jobportal.settings.prod
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-change-me-in-production}"
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DATABASE_URL: "postgres://jobportal:jobportal@db:5432/jobportal"
+      REDIS_URL: "redis://redis:6379/0"
+      MEILI_URL: "http://meilisearch:7700"
+      MEILI_MASTER_KEY: masterKey
+      EMAIL_BACKEND: "django.core.mail.backends.console.EmailBackend"
+      DEFAULT_FROM_EMAIL: "noreply@jobportal.local"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - meilisearch
+
+  worker:
+    build: .
+    restart: unless-stopped
+    command: celery -A jobportal worker -l info
+    environment:
+      DJANGO_SETTINGS_MODULE: jobportal.settings.prod
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-change-me-in-production}"
+      DJANGO_DEBUG: "false"
+      DATABASE_URL: "postgres://jobportal:jobportal@db:5432/jobportal"
+      REDIS_URL: "redis://redis:6379/0"
+      MEILI_URL: "http://meilisearch:7700"
+      MEILI_MASTER_KEY: masterKey
+      EMAIL_BACKEND: "django.core.mail.backends.console.EmailBackend"
+      DEFAULT_FROM_EMAIL: "noreply@jobportal.local"
+    depends_on:
+      - db
+      - redis
+      - meilisearch
+
+volumes:
+  postgres_data:
+  meili_data:
