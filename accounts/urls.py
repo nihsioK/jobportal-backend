@@ -1,12 +1,18 @@
 """URL configuration for the accounts application."""
 
-from django.urls import path
+from django.urls import path, include
 
-from accounts.views import LoginView, RefreshView, RegisterView
+from rest_framework.routers import DefaultRouter
 
+from accounts.views import LoginView, RefreshView, RegisterView, ProfileView, CompanyViewSet
+
+router = DefaultRouter()
+router.register("companies", CompanyViewSet, basename="company")
 
 urlpatterns = [
+    path("login/", LoginView.as_view(), name="login"),
+    path("refresh/", RefreshView.as_view(), name="refresh"),
     path("register/", RegisterView.as_view(), name="register"),
-    path("login/", LoginView.as_view(), name="token_obtain_pair"),
-    path("refresh/", RefreshView.as_view(), name="token_refresh"),
+    path("profile/", ProfileView.as_view(), name="profile"),
+    path("", include(router.urls)),
 ]

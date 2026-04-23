@@ -9,7 +9,7 @@ from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.request import Request
 
-from applications.models import Application, ApplicationStatus
+from applications.models import Application, ApplicationStatus, ApplicationStatusHistory
 from resumes.models import Resume
 from vacancies.models import Vacancy, VacancyStatus
 
@@ -31,9 +31,21 @@ class ApplicationListSerializer(serializers.ModelSerializer[Application]):
             "vacancy_title",
             "vacancy_employer",
             "status",
+            "cover_letter",
             "created_at",
             "updated_at",
         )
+        read_only_fields = fields
+
+
+class ApplicationStatusHistorySerializer(serializers.ModelSerializer):
+    """Serialize status history events."""
+
+    changed_by = serializers.CharField(source="changed_by.email", read_only=True)
+
+    class Meta:
+        model = ApplicationStatusHistory
+        fields = ("old_status", "new_status", "changed_by", "notes", "created_at")
         read_only_fields = fields
 
 
@@ -41,40 +53,37 @@ class ApplicationStatusSerializer(serializers.Serializer):
     """Serializer for employer-driven application status changes."""
 
     status = serializers.ChoiceField(
-        choices=[ApplicationStatus.ACCEPTED, ApplicationStatus.REJECTED],
+        choices=ApplicationStatus.choices,
     )
+    notes = serializers.CharField(required=False, allow_blank=True)
 
     def validate_status(self, value: str) -> str:
-        """Validate that the target status is a legal terminal state."""
+        """Validate that the target status is a legal state."""
         logger.info("Validating status transition target: %s.", value)
-        if value not in {ApplicationStatus.ACCEPTED, ApplicationStatus.REJECTED}:
-            logger.error("Invalid target status %s.", value)
-            raise serializers.ValidationError(
-                "Status must be ACCEPTED or REJECTED."
-            )
+        if value not in ApplicationStatus.values:
+            raise serializers.ValidationError("Invalid status.")
         return value
 
 
-def get_request_resume(request: Request) -> Resume:
-    """Resolve the authenticated user's resume."""
-    logger.info("Resolving request resume.", extra={"user_id": getattr(request.user, "pk", None)})
-
-    try:
-        return request.user.resume
-    except Resume.DoesNotExist as exc:
-        logger.error("Authenticated user has no resume.", extra={"user_id": getattr(request.user, "pk", None)})
-        raise serializers.ValidationError({"resume": "Authenticated job seeker does not have a resume."}) from exc
+def validate_request_resume(resume: Resume, request: Request) -> Resume:
+    """Ensure the resume belongs to the authenticated user."""
+    logger.info("Validating resume ownership.", extra={"user_id": getattr(request.user, "pk", None)})
+    
+    if resume.user != request.user:
+        raise serializers.ValidationError("You do not own this resume.")
+    return resume
 
 
 class ApplicationSerializer(serializers.ModelSerializer[Application]):
     """Serializer for creating and reading applications."""
 
     vacancy = serializers.PrimaryKeyRelatedField(queryset=Vacancy.objects.select_related("employer").all())
+    resume = serializers.PrimaryKeyRelatedField(queryset=Resume.objects.all())
     status = serializers.CharField(read_only=True)
 
     class Meta:
         model = Application
-        fields = ("id", "vacancy", "status", "created_at", "updated_at")
+        fields = ("id", "vacancy", "resume", "status", "cover_letter", "created_at", "updated_at")
         read_only_fields = ("id", "status", "created_at", "updated_at")
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
@@ -89,7 +98,7 @@ class ApplicationSerializer(serializers.ModelSerializer[Application]):
             logger.error("Serializer context missing request object.")
             raise serializers.ValidationError("Request context is required.")
 
-        resume = get_request_resume(request)
+        resume = validate_request_resume(attrs["resume"], request)
         vacancy: Vacancy = attrs["vacancy"]
 
         if vacancy.status != VacancyStatus.OPEN:

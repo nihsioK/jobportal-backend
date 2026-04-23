@@ -8,20 +8,60 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from accounts.models import UserRole
+from accounts.models import Company, UserProfile, UserRole
 
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serialize extended user profile data."""
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            "first_name",
+            "last_name",
+            "phone",
+            "city",
+            "birth_date",
+            "avatar",
+        )
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Serialize user payloads."""
 
+    profile = UserProfileSerializer(read_only=True)
+
     class Meta:
         model = User
-        fields = ("id", "email", "role", "is_active", "created_at", "updated_at")
+        fields = ("id", "email", "role", "is_active", "created_at", "updated_at", "profile")
         read_only_fields = fields
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    """Serialize company profiles."""
+
+    class Meta:
+        model = Company
+        fields = (
+            "id",
+            "employer",
+            "name",
+            "description",
+            "website",
+            "logo",
+            "industry",
+            "city",
+            "employee_count",
+            "founded_year",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "employer", "created_at", "updated_at")
+
 
 
 class RegisterSerializer(serializers.ModelSerializer):

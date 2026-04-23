@@ -1,12 +1,14 @@
 dj-database-url==2.3.0
 django==5.2.13
 django-celery-beat==2.9.0
+django-cors-headers==4.7.0
 djangorestframework==3.17.1
 drf-spectacular==0.28.0
 djangorestframework-simplejwt==5.5.1
 celery==5.4.0
 redis==5.0.4
 psycopg[binary]
+Pillow==11.2.1
 pytest==8.4.2
 pytest-django==4.12.0
 meilisearch==0.34.1

@@ -78,10 +78,10 @@ class MyApplicationsView(generics.ListAPIView):
 
 
 class ApplicationStatusUpdateView(generics.UpdateAPIView):
-    """Allow an employer to accept or reject a candidate."""
+    """Allow an employer to update status or a candidate to withdraw."""
 
     serializer_class = ApplicationStatusSerializer
-    permission_classes = (permissions.IsAuthenticated, IsEmployer)
+    permission_classes = (permissions.IsAuthenticated,)
     http_method_names = ["patch", "head", "options"]
     queryset = Application.objects.select_related(
         "resume__user", "vacancy__employer", "vacancy",
@@ -109,7 +109,8 @@ class ApplicationStatusUpdateView(generics.UpdateAPIView):
         updated = update_application_status(
             application=application,
             new_status=serializer.validated_data["status"],
-            employer=request.user,
+            user=request.user,
+            notes=serializer.validated_data.get("notes", ""),
         )
         return Response(
             ApplicationListSerializer(updated).data,

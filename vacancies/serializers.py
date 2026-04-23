@@ -24,6 +24,11 @@ class VacancySerializer(serializers.ModelSerializer[Vacancy]):
             "id",
             "employer",
             "title",
+            "category",
+            "skills",
+            "city",
+            "employment_type",
+            "experience_level",
             "description",
             "salary_min",
             "salary_max",
@@ -52,6 +57,9 @@ class VacancySerializer(serializers.ModelSerializer[Vacancy]):
             salary_max=salary_max,
             status=status,
         )
+        
+        # NOTE: Many-to-many fields (skills) cannot be set before the instance is saved,
+        # but clean() focuses on basic validation like salary_min < salary_max.
 
         try:
             candidate.clean()

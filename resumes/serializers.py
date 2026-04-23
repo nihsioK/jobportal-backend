@@ -7,63 +7,120 @@ from typing import Any, cast
 
 from rest_framework import serializers
 
-from .models import Resume
+from core.models import City, Skill
+from .models import Certificate, Education, Language, Resume, WorkExperience
 
 logger = logging.getLogger(__name__)
+
+
+class WorkExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkExperience
+        exclude = ("resume",)
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
+        exclude = ("resume",)
+
+
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Language
+        exclude = ("resume",)
+
+
+class CertificateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certificate
+        exclude = ("resume",)
 
 
 class ResumeSerializer(serializers.ModelSerializer):
     """Serializer for the authenticated user's resume."""
 
+    experience = WorkExperienceSerializer(many=True, required=False)
+    education = EducationSerializer(many=True, required=False)
+    languages = LanguageSerializer(many=True, required=False)
+    certificates = CertificateSerializer(many=True, required=False)
+
     class Meta:
         model = Resume
         fields = (
+            "id",
             "title",
             "summary",
-            "education",
+            "desired_salary",
+            "city",
+            "skills",
+            "visibility",
             "experience",
+            "education",
+            "languages",
+            "certificates",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
 
-    def validate_education(self, value: Any) -> list[dict[str, Any]]:
-        """Validate the education JSON structure."""
-        return self._validate_nested_list(field_name="education", value=value)
+    def create(self, validated_data: dict[str, Any]) -> Resume:
+        experience_data = validated_data.pop("experience", [])
+        education_data = validated_data.pop("education", [])
+        languages_data = validated_data.pop("languages", [])
+        certificates_data = validated_data.pop("certificates", [])
+        skills = validated_data.pop("skills", [])
+        
+        user = self.context["request"].user
+        validated_data["user"] = user
 
-    def validate_experience(self, value: Any) -> list[dict[str, Any]]:
-        """Validate the experience JSON structure."""
-        return self._validate_nested_list(field_name="experience", value=value)
+        resume = Resume.objects.create(**validated_data)
+        resume.skills.set(skills)
 
-    @staticmethod
-    def _validate_nested_list(*, field_name: str, value: Any) -> list[dict[str, Any]]:
-        """Ensure JSON payloads are lists of objects with string keys."""
-        logger.info("Validating nested JSON field", extra={"field_name": field_name})
+        for exp in experience_data:
+            WorkExperience.objects.create(resume=resume, **exp)
+        for edu in education_data:
+            Education.objects.create(resume=resume, **edu)
+        for lang in languages_data:
+            Language.objects.create(resume=resume, **lang)
+        for cert in certificates_data:
+            Certificate.objects.create(resume=resume, **cert)
 
-        if not isinstance(value, list):
-            logger.error(
-                "Nested JSON validation failed because payload was not a list",
-                extra={"field_name": field_name},
-            )
-            raise serializers.ValidationError("Expected a list of objects.")
+        return resume
 
-        for index, item in enumerate(value):
-            if not isinstance(item, dict):
-                logger.error(
-                    "Nested JSON validation failed because item was not an object",
-                    extra={"field_name": field_name, "index": index},
-                )
-                raise serializers.ValidationError(
-                    f"Item at index {index} must be an object."
-                )
+    def update(self, instance: Resume, validated_data: dict[str, Any]) -> Resume:
+        experience_data = validated_data.pop("experience", None)
+        education_data = validated_data.pop("education", None)
+        languages_data = validated_data.pop("languages", None)
+        certificates_data = validated_data.pop("certificates", None)
+        skills = validated_data.pop("skills", None)
 
-            if any(not isinstance(key, str) for key in item.keys()):
-                logger.error(
-                    "Nested JSON validation failed because a key was not a string",
-                    extra={"field_name": field_name, "index": index},
-                )
-                raise serializers.ValidationError(
-                    f"Item at index {index} must use string keys."
-                )
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
 
-        return cast(list[dict[str, Any]], value)
+        if skills is not None:
+            instance.skills.set(skills)
+
+        # Simplify nested updates by recreation for MVP
+        if experience_data is not None:
+            instance.experience.all().delete()
+            for exp in experience_data:
+                WorkExperience.objects.create(resume=instance, **exp)
+                
+        if education_data is not None:
+            instance.education.all().delete()
+            for edu in education_data:
+                Education.objects.create(resume=instance, **edu)
+
+        if languages_data is not None:
+            instance.languages.all().delete()
+            for lang in languages_data:
+                Language.objects.create(resume=instance, **lang)
+
+        if certificates_data is not None:
+            instance.certificates.all().delete()
+            for cert in certificates_data:
+                Certificate.objects.create(resume=instance, **cert)
+
+        return instance
