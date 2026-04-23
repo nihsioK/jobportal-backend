@@ -9,12 +9,50 @@ from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.request import Request
 
-from applications.models import Application
+from applications.models import Application, ApplicationStatus
 from resumes.models import Resume
 from vacancies.models import Vacancy, VacancyStatus
 
 
 logger = logging.getLogger(__name__)
+
+
+class ApplicationListSerializer(serializers.ModelSerializer[Application]):
+    """Read-only serializer for listing a seeker's applications."""
+
+    vacancy_title = serializers.CharField(source="vacancy.title", read_only=True)
+    vacancy_employer = serializers.CharField(source="vacancy.employer.email", read_only=True)
+
+    class Meta:
+        model = Application
+        fields = (
+            "id",
+            "vacancy",
+            "vacancy_title",
+            "vacancy_employer",
+            "status",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class ApplicationStatusSerializer(serializers.Serializer):
+    """Serializer for employer-driven application status changes."""
+
+    status = serializers.ChoiceField(
+        choices=[ApplicationStatus.ACCEPTED, ApplicationStatus.REJECTED],
+    )
+
+    def validate_status(self, value: str) -> str:
+        """Validate that the target status is a legal terminal state."""
+        logger.info("Validating status transition target: %s.", value)
+        if value not in {ApplicationStatus.ACCEPTED, ApplicationStatus.REJECTED}:
+            logger.error("Invalid target status %s.", value)
+            raise serializers.ValidationError(
+                "Status must be ACCEPTED or REJECTED."
+            )
+        return value
 
 
 def get_request_resume(request: Request) -> Resume:

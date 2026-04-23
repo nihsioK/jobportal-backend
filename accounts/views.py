@@ -33,6 +33,8 @@ logger = logging.getLogger(__name__)
 class LoginView(TokenObtainPairView):
     """Issue an access and refresh token pair for a valid user."""
 
+    permission_classes = [permissions.AllowAny]
+
 
 @extend_schema(
     tags=["accounts"],
@@ -42,6 +44,8 @@ class LoginView(TokenObtainPairView):
 )
 class RefreshView(TokenRefreshView):
     """Issue a fresh access token from a valid refresh token."""
+
+    permission_classes = [permissions.AllowAny]
 
 
 class RegisterView(APIView):
