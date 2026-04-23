@@ -53,3 +53,33 @@ class ApplicationStatusHistory(models.Model):
 
     def __str__(self) -> str:
         return f"StatusChange<{self.application_id}: {self.old_status}->{self.new_status}>"
+
+class Interview(models.Model):
+    """Interview scheduled for an application."""
+    application = models.ForeignKey(Application, related_name="interviews", on_delete=models.CASCADE)
+    scheduled_at = models.DateTimeField()
+    location = models.CharField(max_length=255, blank=True, help_text="Zoom link or physical address")
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-scheduled_at"]
+
+    def __str__(self) -> str:
+        return f"Interview<{self.id}: {self.application_id} @ {self.scheduled_at}>"
+
+
+class ApplicationMessage(models.Model):
+    """Direct message between employer and job seeker regarding an application."""
+    application = models.ForeignKey(Application, related_name="messages", on_delete=models.CASCADE)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="sent_messages", on_delete=models.CASCADE)
+    content = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self) -> str:
+        return f"Message<{self.id}: from {self.sender_id} on {self.application_id}>"

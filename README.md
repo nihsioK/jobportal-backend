@@ -16,6 +16,7 @@ JobPortal is a Django 5 and Django REST Framework backend for a job board MVP. T
             |  - resumes           |
             |  - vacancies         |
             |  - applications      |
+            |  - communications    |
             |  - OpenAPI docs      |
             +----+-------------+---+
                  |             |
@@ -81,6 +82,10 @@ Open the running service at:
 | `PATCH` | `/api/vacancies/{id}/` | Employer owner | Update one of your vacancies. |
 | `DELETE` | `/api/vacancies/{id}/` | Employer owner | Delete one of your vacancies. |
 | `POST` | `/api/applications/` | Job seeker | Apply to an open vacancy using the authenticated seeker's resume. |
+| `POST` | `/api/accounts/company-reviews/` | Job seeker | Leave a review for an employer's company. |
+| `POST` | `/api/accounts/company-followers/` | Job seeker | Follow an employer's company to receive updates. |
+| `POST` | `/api/applications/interviews/` | Authenticated | Schedule an interview for a specific application. |
+| `POST` | `/api/applications/messages/` | Authenticated | Send a direct message regarding an application. |
 
 ## Verification
 

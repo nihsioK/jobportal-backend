@@ -13,8 +13,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from accounts.models import Company, UserProfile, UserRole
-from accounts.permissions import IsEmployer
+from accounts.models import Company, UserProfile, UserRole, CompanyReview, CompanyFollower
+from accounts.permissions import IsEmployer, IsJobSeeker
 from accounts.serializers import (
     CompanySerializer,
     RegisterSerializer,
@@ -22,6 +22,8 @@ from accounts.serializers import (
     TokenRefreshResponseSerializer,
     UserProfileSerializer,
     UserSerializer,
+    CompanyReviewSerializer,
+    CompanyFollowerSerializer,
 )
 
 
@@ -114,6 +116,44 @@ class CompanyViewSet(viewsets.ModelViewSet):
         if self.action in {"partial_update", "destroy"} and self.request.user.is_authenticated:
             return Company.objects.filter(employer=self.request.user)
         return super().get_queryset()
+        return super().get_queryset()
 
 
-__all__ = ["LoginView", "RefreshView", "RegisterView", "ProfileView", "CompanyViewSet"]
+@extend_schema_view(
+    list=extend_schema(summary="List company reviews", tags=["companies"]),
+    create=extend_schema(summary="Review a company", tags=["companies"]),
+)
+class CompanyReviewViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """CRUD API for company reviews."""
+    serializer_class = CompanyReviewSerializer
+    queryset = CompanyReview.objects.all()
+
+    def get_permissions(self):
+        if self.action == "create":
+            return [permissions.IsAuthenticated(), IsJobSeeker()]
+        return [permissions.AllowAny()]
+
+    def perform_create(self, serializer):
+        serializer.save(reviewer=self.request.user)
+
+
+@extend_schema_view(
+    list=extend_schema(summary="List company followers", tags=["companies"]),
+    create=extend_schema(summary="Follow a company", tags=["companies"]),
+    destroy=extend_schema(summary="Unfollow a company", tags=["companies"]),
+)
+class CompanyFollowerViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    """CRUD API for company followers."""
+    serializer_class = CompanyFollowerSerializer
+    queryset = CompanyFollower.objects.all()
+
+    def get_permissions(self):
+        if self.action in {"create", "destroy"}:
+            return [permissions.IsAuthenticated(), IsJobSeeker()]
+        return [permissions.AllowAny()]
+
+    def perform_create(self, serializer):
+        serializer.save(follower=self.request.user)
+
+
+__all__ = ["LoginView", "RefreshView", "RegisterView", "ProfileView", "CompanyViewSet", "CompanyReviewViewSet", "CompanyFollowerViewSet"]

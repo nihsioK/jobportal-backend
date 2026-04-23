@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -109,4 +110,49 @@ class Company(models.Model):
 
     def __str__(self) -> str:
         return f"Company<{self.name}>"
+
+
+class CompanyReview(models.Model):
+    """Review and rating for a company by a job seeker."""
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="reviews")
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="company_reviews",
+        limit_choices_to={"role": UserRole.JOB_SEEKER},
+    )
+    rating = models.PositiveSmallIntegerField(help_text="Rating from 1 to 5")
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["company", "reviewer"], name="unique_company_review"),
+        ]
+
+    def __str__(self) -> str:
+        return f"Review<{self.company_id} by {self.reviewer_id}: {self.rating}>"
+
+
+class CompanyFollower(models.Model):
+    """Job seeker following a company to receive updates."""
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="followers")
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="followed_companies",
+        limit_choices_to={"role": UserRole.JOB_SEEKER},
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["company", "follower"], name="unique_company_follower"),
+        ]
+
+    def __str__(self) -> str:
+        return f"Follower<{self.company_id}: {self.follower_id}>"
 

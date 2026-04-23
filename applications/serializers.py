@@ -9,7 +9,7 @@ from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.request import Request
 
-from applications.models import Application, ApplicationStatus, ApplicationStatusHistory
+from applications.models import Application, ApplicationStatus, ApplicationStatusHistory, Interview, ApplicationMessage
 from resumes.models import Resume
 from vacancies.models import Vacancy, VacancyStatus
 
@@ -126,3 +126,21 @@ class ApplicationSerializer(serializers.ModelSerializer[Application]):
         except IntegrityError as exc:
             logger.error("Application creation hit a uniqueness constraint.", exc_info=exc)
             raise serializers.ValidationError({"non_field_errors": ["You have already applied to this vacancy."]}) from exc
+
+
+class InterviewSerializer(serializers.ModelSerializer):
+    """Serializer for application interviews."""
+
+    class Meta:
+        model = Interview
+        fields = ("id", "application", "scheduled_at", "location", "notes", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
+
+
+class ApplicationMessageSerializer(serializers.ModelSerializer):
+    """Serializer for direct messages."""
+
+    class Meta:
+        model = ApplicationMessage
+        fields = ("id", "application", "sender", "content", "is_read", "created_at")
+        read_only_fields = ("id", "sender", "created_at")

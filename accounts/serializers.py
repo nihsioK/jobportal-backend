@@ -8,7 +8,7 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from accounts.models import Company, UserProfile, UserRole
+from accounts.models import Company, UserProfile, UserRole, CompanyReview, CompanyFollower
 
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,24 @@ class CompanySerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = ("id", "employer", "created_at", "updated_at")
+
+
+class CompanyReviewSerializer(serializers.ModelSerializer):
+    """Serialize company reviews."""
+
+    class Meta:
+        model = CompanyReview
+        fields = ("id", "company", "reviewer", "rating", "comment", "created_at", "updated_at")
+        read_only_fields = ("id", "reviewer", "created_at", "updated_at")
+
+
+class CompanyFollowerSerializer(serializers.ModelSerializer):
+    """Serialize company followers."""
+
+    class Meta:
+        model = CompanyFollower
+        fields = ("id", "company", "follower", "created_at")
+        read_only_fields = ("id", "follower", "created_at")
 
 
 

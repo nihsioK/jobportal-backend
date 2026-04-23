@@ -12,11 +12,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from accounts.permissions import IsEmployer, IsJobSeeker
-from applications.models import Application
+from applications.models import Application, Interview, ApplicationMessage
 from applications.serializers import (
     ApplicationListSerializer,
     ApplicationSerializer,
     ApplicationStatusSerializer,
+    InterviewSerializer,
+    ApplicationMessageSerializer,
 )
 from applications.services import update_application_status
 
@@ -116,3 +118,44 @@ class ApplicationStatusUpdateView(generics.UpdateAPIView):
             ApplicationListSerializer(updated).data,
             status=status.HTTP_200_OK,
         )
+
+
+@extend_schema_view(
+    list=extend_schema(summary="List interviews", tags=["interviews"]),
+    create=extend_schema(summary="Schedule an interview", tags=["interviews"]),
+)
+class InterviewViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """CRUD API for interviews."""
+    serializer_class = InterviewSerializer
+    queryset = Interview.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == "JOB_SEEKER":
+            return Interview.objects.filter(application__resume__user=user)
+        elif user.role == "EMPLOYER":
+            return Interview.objects.filter(application__vacancy__employer=user)
+        return Interview.objects.none()
+
+
+@extend_schema_view(
+    list=extend_schema(summary="List messages", tags=["messages"]),
+    create=extend_schema(summary="Send a message", tags=["messages"]),
+)
+class ApplicationMessageViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """CRUD API for direct messages."""
+    serializer_class = ApplicationMessageSerializer
+    queryset = ApplicationMessage.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == "JOB_SEEKER":
+            return ApplicationMessage.objects.filter(application__resume__user=user)
+        elif user.role == "EMPLOYER":
+            return ApplicationMessage.objects.filter(application__vacancy__employer=user)
+        return ApplicationMessage.objects.none()
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user)
